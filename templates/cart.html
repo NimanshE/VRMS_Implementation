@@ -27,14 +27,14 @@
                                 <td>{{ cart_item.item.title }}</td>
                                 <td>{{ cart_item.item.type }}</td>
                                 <td>{{ cart_item.item.genre }}</td>
-                                <td>Rs. {{ cart_item.item.daily_rate }}</td>
+                                <td>Rs. {{ cart_item.item.daily_rate|round(2) }}</td>
                                 <td>
                                     <form method="POST" action="{{ url_for('edit_cart', cart_id=cart_item.id) }}" class="d-inline">
                                         <input type="number" name="days" value="{{ cart_item.days }}" min="1" max="14" class="form-control form-control-sm d-inline w-auto days-input" data-daily-rate="{{ cart_item.item.daily_rate }}" required>
                                         <button type="submit" class="btn btn-sm btn-primary">Update</button>
                                     </form>
                                 </td>
-                                <td class="item-total-cost">Rs. {{ cart_item.item.daily_rate * cart_item.days }}</td>
+                                <td class="item-total-cost">Rs. {{ (cart_item.item.daily_rate * cart_item.days)|round(2)}}</td>
                                 <td>
                                     <form method="POST" action="{{ url_for('remove_from_cart', cart_id=cart_item.id) }}">
                                         <button type="submit" class="btn btn-danger btn-sm">Remove</button>
@@ -46,7 +46,7 @@
                 </table>
             </div>
             <div class="mt-4">
-                <p><strong>Total Cost:</strong> Rs. <span id="totalCost">{{ total_cost }}</span></p>
+                <p><strong>Total Cost:</strong> Rs. <span id="totalCost">{{ total_cost|round(2) }}</span></p>
                 <form method="POST">
                     <button type="submit" class="btn btn-primary">Checkout</button>
                     <a href="{{ url_for('browse_items') }}" class="btn btn-secondary">Continue Browsing</a>

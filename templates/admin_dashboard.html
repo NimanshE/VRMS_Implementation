@@ -96,7 +96,7 @@
                                             <td>{{ user.role }}</td>
                                             <td>
                                                 {% if user.role == 'customer' %}
-                                                    Rs. {{ user.deposit }}
+                                                    Rs. {{ user.deposit|round(2)}}
                                                 {% else %}
                                                     -
                                                 {% endif %}
@@ -211,7 +211,7 @@
                                                     <span class="badge bg-danger">Overdue</span>
                                                 {% endif %}
                                             </td>
-                                            <td>Rs. {{ rental.total_charge }}</td>
+                                            <td>Rs. {{ rental.total_charge|round(2) }}</td>
                                         </tr>
                                     {% endfor %}
                                 </tbody>

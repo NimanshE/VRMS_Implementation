@@ -15,7 +15,7 @@
                 <p><strong>Email:</strong> {{ current_user.email }}</p>
                 <p><strong>Phone:</strong> {{ current_user.phone }}</p>
                 <p><strong>Address:</strong> {{ current_user.address }}</p>
-                <p><strong>Deposit Amount:</strong> Rs. {{ current_user.deposit }}</p>
+                <p><strong>Deposit Amount:</strong> Rs. {{ current_user.deposit|round(2) }}</p>
                 <p><strong>Membership Status:</strong>
                     {% if current_user.membership_active %}
                         <span class="badge bg-success">Active</span>
@@ -87,7 +87,7 @@
                                             <span class="badge bg-danger">Overdue</span>
                                         {% endif %}
                                     </td>
-                                    <td>Rs. {{ rental.total_charge }}</td>
+                                    <td>Rs. {{ rental.total_charge|round(2) }}</td>
                                     <td>
                                         {% if rental.status == 'approved' and not rental.early_return_requested %}
                                             <form method="POST" action="{{ url_for('request_early_return', rental_id=rental.id) }}">
