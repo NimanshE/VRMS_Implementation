@@ -6,6 +6,19 @@ from datetime import datetime, timedelta
 import random
 from app import User, Rental
 
+
+def random_last_issued_date():
+    if random.choice([True, False]):  # Randomly decide if the item was issued
+        return random_date(2024, 2025)  # Random date between 2022 and 2025
+    return None
+
+def random_date(start_year, end_year):
+    start_date = datetime(start_year, 1, 1)
+    end_date = datetime(end_year, 12, 31)
+    delta = end_date - start_date
+    random_days = random.randint(0, delta.days)
+    return start_date + timedelta(days=random_days)
+
 def populate_items():
     with app.app_context():  # Add application context
         # Clear existing items
@@ -129,8 +142,10 @@ def populate_items():
                 type="music_cd",
                 genre=genre,
                 daily_rate=round(random.uniform(5, 25), 2),
+                purchase_price=round(random.uniform(100, 300), 2),
                 available=True,
-                date_added=datetime.utcnow()
+                date_added = random_date(2023, 2025),
+                last_issued_date = random_last_issued_date()
             )
             db.session.add(item)
 
@@ -140,8 +155,11 @@ def populate_items():
                 type="video_cd",
                 genre=genre,
                 daily_rate=round(random.uniform(30, 100), 2),
+                purchase_price=round(random.uniform(500, 650), 2),
                 available=True,
-                date_added=datetime.utcnow()
+                date_added = random_date(2023, 2025),
+                last_issued_date = random_last_issued_date()
+
             )
             db.session.add(item)
 
@@ -151,8 +169,10 @@ def populate_items():
                 type="dvd",
                 genre=genre,
                 daily_rate=round(random.uniform(100, 250), 2),
+                purchase_price=round(random.uniform(600, 800), 2),
                 available=True,
-                date_added=datetime.utcnow()
+                date_added = random_date(2023, 2025),
+                last_issued_date = random_last_issued_date()
             )
             db.session.add(item)
 
@@ -162,8 +182,10 @@ def populate_items():
                 type="vhs",
                 genre=genre,
                 daily_rate=round(random.uniform(10, 50), 2),
+                purchase_price=round(random.uniform(400, 500), 2),
                 available=True,
-                date_added=datetime.utcnow()
+                date_added = random_date(2023, 2025),
+                last_issued_date = random_last_issued_date()
             )
             db.session.add(item)
 
@@ -172,68 +194,5 @@ def populate_items():
         print("Items populated successfully!")
 
 
-def populate_users():
-    with app.app_context():
-        # Clear existing users
-        User.query.delete()
-
-        # Predefined users
-        users = [
-            {"name": "Admin User", "email": "admin@example.com", "password": "admin123", "role": "admin"},
-            {"name": "Clerk User", "email": "clerk@example.com", "password": "clerk123", "role": "clerk"},
-            {"name": "John Doe", "email": "john.doe@example.com", "password": "password123", "role": "customer", "deposit": 1500.00},
-            {"name": "Jane Smith", "email": "jane.smith@example.com", "password": "password123", "role": "customer", "deposit": 2000.00},
-            {"name": "Alice Johnson", "email": "alice.johnson@example.com", "password": "password123", "role": "customer", "deposit": 1000.00},
-        ]
-
-        for user_data in users:
-            user = User(
-                name=user_data["name"],
-                email=user_data["email"],
-                password=generate_password_hash(user_data["password"]),
-                role=user_data["role"],
-                deposit=user_data.get("deposit", 0.00),
-                membership_active=user_data["role"] == "customer",
-                date_joined=datetime.utcnow()
-            )
-            db.session.add(user)
-
-        db.session.commit()
-        print("Users populated successfully!")
-
-def populate_rentals():
-    with app.app_context():
-        # Clear existing rentals
-        Rental.query.delete()
-
-        # Fetch users and items
-        customers = User.query.filter_by(role="customer").all()
-        items = Item.query.all()
-
-        # Generate random rentals
-        for _ in range(20):  # Create 20 random rentals
-            customer = random.choice(customers)
-            item = random.choice(items)
-            rental_date = datetime.utcnow() - timedelta(days=random.randint(1, 30))
-            due_date = rental_date + timedelta(days=random.randint(1, 14))
-            return_date = rental_date + timedelta(days=random.randint(1, 14)) if random.random() > 0.5 else None
-            status = "returned" if return_date else "approved"
-
-            rental = Rental(
-                user_id=customer.id,
-                item_id=item.id,
-                rental_date=rental_date,
-                due_date=due_date,
-                return_date=return_date,
-                status=status,
-                total_charge=round(item.daily_rate * (return_date - rental_date).days if return_date else item.daily_rate * (due_date - rental_date).days, 2)
-            )
-            db.session.add(rental)
-
-        db.session.commit()
-        print("Rentals populated successfully!")
-
 if __name__ == "__main__":
     populate_items()
-    populate_users()
-    populate_rentals()

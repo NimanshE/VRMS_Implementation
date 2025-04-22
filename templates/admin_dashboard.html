@@ -49,6 +49,7 @@
                 <div class="mt-4">
                     <a href="{{ url_for('add_item') }}" class="btn btn-primary me-2">Add New Item</a>
                     <a href="{{ url_for('add_user') }}" class="btn btn-success">Add New User</a>
+
                 </div>
             </div>
         </div>
@@ -66,6 +67,9 @@
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="rentals-tab" data-bs-toggle="tab" data-bs-target="#rentals" type="button" role="tab">Rentals</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="sold-items-tab" data-bs-toggle="tab" data-bs-target="#sold-items" type="button" role="tab">Sold Items</button>
             </li>
         </ul>
 
@@ -134,10 +138,12 @@
                                         <th>Title</th>
                                         <th>Type</th>
                                         <th>Format</th>
+                                        <th>Purchase Price</th>
                                         <th>Genre</th>
                                         <th>Daily Rate</th>
                                         <th>Status</th>
                                         <th>Added On</th>
+                                        <th>Last Issued</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -147,21 +153,76 @@
                                             <td>{{ item.title }}</td>
                                             <td>{{ item.type }}</td>
                                             <td>{{ item.format }}</td>
+                                            <td>Rs. {{ item.purchase_price|round(2) }}</td>
                                             <td>{{ item.genre }}</td>
                                             <td>Rs. {{ item.daily_rate }}</td>
                                             <td>
-                                                {% if item.available %}
+                                                {% if item.sold_date %}
+                                                    <span class="badge bg-danger"> Sold </span>
+                                                {% elif item.available %}
                                                     <span class="badge bg-success">Available</span>
                                                 {% else %}
                                                     <span class="badge bg-danger">Rented</span>
                                                 {% endif %}
                                             </td>
                                             <td>{{ item.date_added.strftime('%Y-%m-%d') }}</td>
+                                            <td>
+                                                {{ item.last_issued_date.strftime('%Y-%m-%d') if item.last_issued_date else 'Never' }}
+                                            </td>
+                                            <td>
+                                                {% if item.sold_date %}
+                                                    <span class="badge bg-danger">Sold</span>
+                                                {% else %}
+                                                    {% if (item.last_issued_date is none and (item.date_added + timedelta(days=365)) < now) or (item.last_issued_date and (item.last_issued_date + timedelta(days=365)) < now) %}
+                                                        <form method="POST" action="{{ url_for('sell_item', item_id=item.id) }}">
+                                                            <button type="submit" class="btn btn-warning btn-sm">Sell for Rs. {{ (item.purchase_price * 0.9)|round(2) }}</button>
+                                                        </form>
+                                                    {% endif %}
+                                                {% endif %}
+                                            </td>
                                         </tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="sold-items" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <h5>Sold Items</h5>
+                        {% if sold_items %}
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Title</th>
+                                            <th>Type</th>
+                                            <th>Genre</th>
+                                            <th>Original Price</th>
+                                            <th>Selling Price (10% Discount)</th>
+                                            <th>Sold Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in sold_items %}
+                                            <tr>
+                                                <td>{{ item.title }}</td>
+                                                <td>{{ item.type }}</td>
+                                                <td>{{ item.genre }}</td>
+                                                <td>Rs. {{ item.purchase_price|round(2) }}</td>
+                                                <td>Rs. {{ (item.purchase_price * 0.9)|round(2) }}</td>
+                                                <td>{{ item.sold_date.strftime('%Y-%m-%d') if item.sold_date else 'N/A' }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info">No sold items at the moment.</div>
+                        {% endif %}
                     </div>
                 </div>
             </div>

@@ -70,10 +70,13 @@ class Item(db.Model):
     format = db.Column(db.String(20))  # 'VHS', 'MP4', etc.
     genre = db.Column(db.String(50))
     daily_rate = db.Column(db.Float, nullable=False)
+    purchase_price = db.Column(db.Float, nullable=False) # Assuming this is the price to buy the item
     available = db.Column(db.Boolean, default=True)
     date_added = db.Column(db.DateTime, default=datetime.utcnow)
 
     rentals = db.relationship('Rental', backref='item', lazy=True)
+    last_issued_date = db.Column(db.DateTime, nullable=True)
+    sold_date = db.Column(db.DateTime, nullable=True)
 
 
 class Cart(db.Model):
@@ -217,6 +220,8 @@ def view_cart():
 
     return render_template('cart.html', cart_items=cart_items, total_cost=total_cost)
 
+
+
 @app.route('/cart/add/<int:item_id>', methods=['POST'])
 @login_required
 def add_to_cart(item_id):
@@ -306,8 +311,10 @@ def admin_dashboard():
             'total_charge': rental.total_charge
         })
 
-    return render_template('admin_dashboard.html', users=users, items=items, rentals=rental_details)
+    # Query all sold items
+    sold_items = Item.query.filter_by(available=False).all()
 
+    return render_template('admin_dashboard.html', users=users, items=items, rentals=rental_details,sold_items=sold_items,timedelta=timedelta,now=datetime.utcnow())
 
 """@app.route('/clerk/dashboard')
 @login_required
@@ -321,6 +328,40 @@ def clerk_dashboard():
 
     return render_template('clerk_dashboard.html', pending_rentals=pending_rentals, active_rentals=active_rentals)
 """
+
+"""@app.route('/sell_item/<int:item_id>', methods=['POST'])
+@login_required
+def sell_item(item_id):
+    if current_user.role != 'admin':
+        flash("Unauthorized access", "danger")
+        return redirect(url_for('admin_dashboard'))
+
+    item = Item.query.get_or_404(item_id)
+    if item.last_issued_date and (item.last_issued_date + timedelta(days=365)) < datetime.utcnow():
+        db.session.delete(item)
+        db.session.commit()
+        flash(f"Item '{item.title}' sold and removed from inventory.", "success")
+    else:
+        flash("Item is not eligible for sale.", "warning")
+
+    return redirect(url_for('admin_dashboard'))"""
+
+@app.route('/sell_item/<int:item_id>', methods=['POST'])
+@login_required
+def sell_item(item_id):
+    if current_user.role != 'admin':
+        return redirect(url_for('home'))
+
+    item = Item.query.get_or_404(item_id)
+    if item.available:
+        item.available = False
+        item.sold_date = datetime.utcnow()
+        db.session.commit()
+        flash(f'Item "{item.title}" has been sold.', 'success')
+    else:
+        flash(f'Item "{item.title}" is already sold.', 'warning')
+
+    return redirect(url_for('admin_dashboard'))
 
 @app.route('/clerk/dashboard')
 @login_required
@@ -490,8 +531,8 @@ def browse_items():
     query = request.args.get('query', '').strip()
     item_type = request.args.get('type', '').strip()
 
-    # Base query to fetch only available items
-    items_query = Item.query
+    # Base query to fetch items that are not sold
+    items_query = Item.query.filter((Item.sold_date == None))
 
     # Apply search filter if a query is provided
     if query:
@@ -634,7 +675,9 @@ def approve_rental(rental_id):
         if action == 'approve':
             rental.status = 'approved'
             rental.approved_by = current_user.id
-
+            rental.approved_date = datetime.utcnow()
+            # Update the last_issued_date for the item
+            rental.item.last_issued_date = datetime.utcnow()
             # Calculate total charge and deduct from user's deposit
             rental_days = max((rental.due_date - rental.rental_date).days, 1)
             total_charge = item.daily_rate * rental_days
