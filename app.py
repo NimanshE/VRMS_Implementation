@@ -51,9 +51,10 @@ class Rental(db.Model):
     rental_date = db.Column(db.DateTime, default=datetime.utcnow)
     return_date = db.Column(db.DateTime)
     due_date = db.Column(db.DateTime, nullable=False)
-    status = db.Column(db.String(20), default='pending')  # 'pending', 'approved', 'returned', 'overdue'
+    status = db.Column(db.String(20), default='pending')  # 'pending', 'approved', 'returned', 'lost', 'damaged'
     approved_by = db.Column(db.Integer, db.ForeignKey('user.id'))  # Clerk/Admin who approved
     total_charge = db.Column(db.Float)
+    lost_or_damaged = db.Column(db.Boolean, default=False)  # New field
 
     # Specify foreign_keys for approved_by relationship
     approved_by_user = db.relationship('User', foreign_keys=[approved_by])
@@ -358,6 +359,16 @@ def clerk_dashboard():
             'due_date': rental.due_date
         })
 
+    # Fetch early return requests
+    early_returns = Rental.query.filter_by(early_return_requested=True).all()
+
+    return render_template(
+        'clerk_dashboard.html',
+        pending_rentals=pending_rentals,
+        active_rentals=active_rentals,
+        early_returns=early_returns
+    )
+
     return render_template('clerk_dashboard.html', pending_rentals=pending_rental_details, active_rentals=active_rental_details)
 
 
@@ -413,6 +424,34 @@ def make_deposit():
 
     return render_template('make_deposit.html')
 
+@app.route('/report_lost_damaged/<int:rental_id>', methods=['POST'])
+@login_required
+def report_lost_damaged(rental_id):
+    if current_user.role != 'clerk':
+        flash('Unauthorized access.', 'danger')
+        return redirect(url_for('clerk_dashboard'))
+
+    rental = Rental.query.get_or_404(rental_id)
+    item = Item.query.get_or_404(rental.item_id)
+    user = User.query.get_or_404(rental.user_id)
+
+    if rental.lost_or_damaged:
+        flash('This rental has already been reported as lost or damaged.', 'warning')
+        return redirect(url_for('clerk_dashboard'))
+
+    # Charge the user the full purchase price
+    purchase_price = item.daily_rate * 30  # Example: Assume 30 days' worth of daily rate as the purchase price
+    if user.deposit >= purchase_price:
+        user.deposit -= purchase_price
+        rental.lost_or_damaged = True
+        rental.status = 'lost'  # Mark as lost or damaged
+        item.available = False  # Remove item from inventory
+        db.session.commit()
+        flash(f'Item reported as lost/damaged. Rs. {purchase_price} has been deducted from the user\'s deposit.', 'success')
+    else:
+        flash('Insufficient deposit to cover the cost of the lost/damaged item.', 'danger')
+
+    return redirect(url_for('clerk_dashboard'))
 
 @app.route('/cancel_membership', methods=['GET', 'POST'])
 @login_required
