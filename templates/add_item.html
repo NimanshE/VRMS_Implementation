@@ -1,0 +1,58 @@
+<!-- templates/add_item.html -->
+{% extends 'base.html' %}
+
+{% block title %}Add Item - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <div class="card">
+            <div class="card-header">
+                <h4>Add New Item</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="title" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="type" class="form-label">Type</label>
+                        <select class="form-control" id="type" name="type" required>
+                            <option value="video_cd">Video CD</option>
+                            <option value="music_cd">Music CD</option>
+                            <option value="dvd">DVD</option>
+                            <option value="vhs">VHS</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="format" class="form-label">Format</label>
+                        <input type="text" class="form-control" id="format" name="format" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="genre" class="form-label">Genre</label>
+                        <input type="text" class="form-control" id="genre" name="genre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="daily_rate" class="form-label">Daily Rate</label>
+                        <input type="number" class="form-control" id="daily_rate" name="daily_rate" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="available" class="form-label">Available</label>
+                        <select class="form-control" id="available" name="available" required>
+                            <option value="1">Yes</option>
+                            <option value="0">No</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Item</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

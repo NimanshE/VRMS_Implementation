@@ -1,0 +1,112 @@
+<!-- templates/customer_dashboard.html -->
+{% extends 'base.html' %}
+
+{% block title %}My Account - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Account Information</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Name:</strong> {{ current_user.name }}</p>
+                <p><strong>Email:</strong> {{ current_user.email }}</p>
+                <p><strong>Phone:</strong> {{ current_user.phone }}</p>
+                <p><strong>Address:</strong> {{ current_user.address }}</p>
+                <p><strong>Deposit Amount:</strong> Rs. {{ current_user.deposit }}</p>
+                <p><strong>Membership Status:</strong>
+                    {% if current_user.membership_active %}
+                        <span class="badge bg-success">Active</span>
+                    {% else %}
+                        <span class="badge bg-warning">Inactive</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5>Actions</h5>
+            </div>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item">
+                    <a href="{{ url_for('make_deposit') }}" class="btn btn-primary btn-sm">Make Deposit</a>
+                </li>
+                {% if current_user.membership_active %}
+                    <li class="list-group-item">
+                        <a href="{{ url_for('cancel_membership') }}" class="btn btn-danger btn-sm">Cancel Membership</a>
+                    </li>
+                {% endif %}
+                <li class="list-group-item">
+                    <a href="{{ url_for('browse_items') }}" class="btn btn-success btn-sm">Browse Items</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>My Rentals</h5>
+            </div>
+            <div class="card-body">
+                {% if user_rentals %}
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Type</th>
+                                <th>Rental Date</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                                <th>Charge</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for rental in user_rentals %}
+                                <tr>
+                                    <td>{{ rental.item.title }}</td>
+                                    <td>{{ rental.item.type }}</td>
+                                    <td>{{ rental.rental_date.strftime('%Y-%m-%d') }}</td>
+                                    <td>{{ rental.due_date.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        {% if rental.status == 'pending' %}
+                                            <span class="badge bg-warning">Pending</span>
+                                        {% elif rental.status == 'approved' %}
+                                            <span class="badge bg-success">Approved</span>
+                                        {% elif rental.status == 'declined' %}
+                                            <span class="badge bg-danger">Declined</span>
+                                        {% elif rental.status == 'returned' %}
+                                            <span class="badge bg-info">Returned</span>
+                                        {% elif rental.status == 'overdue' %}
+                                            <span class="badge bg-danger">Overdue</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>Rs. {{ rental.total_charge }}</td>
+                                    <td>
+                                        {% if rental.status == 'approved' and not rental.early_return_requested %}
+                                            <form method="POST" action="{{ url_for('request_early_return', rental_id=rental.id) }}">
+                                                <button type="submit" class="btn btn-warning btn-sm">Request Early Return</button>
+                                            </form>
+                                        {% elif rental.early_return_requested %}
+                                            <span class="badge bg-info">Early Return Requested</span>
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>You don't have any rentals yet.</p>
+                    <a href="{{ url_for('browse_items') }}" class="btn btn-primary">Browse Items</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

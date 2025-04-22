@@ -1,0 +1,35 @@
+<!-- templates/make_deposit.html -->
+{% extends 'base.html' %}
+
+{% block title %}Make Deposit - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <div class="card">
+            <div class="card-header">
+                <h4>Make Deposit</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    {% if not current_user.membership_active %}
+                        <p>You need to make an initial deposit of at least Rs. 1000 to activate your membership.</p>
+                    {% else %}
+                        <p>Your current deposit balance: Rs. {{ current_user.deposit }}</p>
+                    {% endif %}
+                </div>
+
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Deposit Amount (Rs.)</label>
+                        <input type="number" class="form-control" id="amount" name="amount" min="100" step="100" required
+                               {% if not current_user.membership_active %}value="1000"{% endif %}>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Make Deposit</button>
+                    <a href="{{ url_for('customer_dashboard') }}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

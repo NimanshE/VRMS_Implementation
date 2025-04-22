@@ -1,0 +1,61 @@
+<!-- templates/approve_rental.html -->
+{% extends 'base.html' %}
+
+{% block title %}Approve Rental - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <div class="card">
+            <div class="card-header">
+                <h4>Approve or Deny Rental Request</h4>
+            </div>
+            <div class="card-body">
+                <h5>Rental Details</h5>
+                <table class="table table-bordered">
+                    <tr>
+                        <th>Customer:</th>
+                        <td>{{ user.name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Customer Email:</th>
+                        <td>{{ user.email }}</td>
+                    </tr>
+                    <tr>
+                        <th>Item:</th>
+                        <td>{{ item.title }}</td>
+                    </tr>
+                    <tr>
+                        <th>Type:</th>
+                        <td>{{ item.type }}</td>
+                    </tr>
+                    <tr>
+                        <th>Rental Date:</th>
+                        <td>{{ rental.rental_date.strftime('%Y-%m-%d') }}</td>
+                    </tr>
+                    <tr>
+                        <th>Due Date:</th>
+                        <td>{{ rental.due_date.strftime('%Y-%m-%d') }}</td>
+                    </tr>
+                    <tr>
+                        <th>Total Charge:</th>
+                        <td>Rs. {{ rental.total_charge }}</td>
+                    </tr>
+                </table>
+
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="note" class="form-label">Add Note (Optional for Denial)</label>
+                        <textarea class="form-control" id="note" name="note" rows="3"></textarea>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" name="action" value="approve" class="btn btn-success">Approve Rental</button>
+                        <button type="submit" name="action" value="deny" class="btn btn-danger">Deny Rental</button>
+                        <a href="{{ url_for('clerk_dashboard') }}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

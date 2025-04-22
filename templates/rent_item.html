@@ -1,0 +1,47 @@
+<!-- templates/rent_item.html -->
+{% extends 'base.html' %}
+
+{% block title %}Rent {{ item.title }} - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <div class="card">
+            <div class="card-header">
+                <h4>Rent Item: {{ item.title }}</h4>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h5>Item Details</h5>
+                    <p><strong>Title:</strong> {{ item.title }}</p>
+                    <p><strong>Type:</strong> {{ item.type }}</p>
+                    <p><strong>Format:</strong> {{ item.format }}</p>
+                    <p><strong>Genre:</strong> {{ item.genre }}</p>
+                    <p><strong>Daily Rate:</strong> Rs. {{ item.daily_rate }}</p>
+                </div>
+
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="days" class="form-label">Number of Days</label>
+                        <input type="number" class="form-control" id="days" name="days" min="1" max="14" value="1" required>
+                        <div class="form-text">Maximum rental period is 14 days.</div>
+                    </div>
+                    <div class="mb-3">
+                        <p><strong>Total Cost:</strong> Rs. <span id="totalCost">{{ item.daily_rate }}</span></p>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit Rental Request</button>
+                    <a href="{{ url_for('browse_items') }}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('days').addEventListener('change', function() {
+    const dailyRate = {{ item.daily_rate }};
+    const days = this.value;
+    document.getElementById('totalCost').textContent = (dailyRate * days).toFixed(2);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,89 @@
+<!-- templates/cart.html -->
+{% extends 'base.html' %}
+
+{% block title %}My Cart - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2>My Cart</h2>
+        {% if cart_items %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Type</th>
+                            <th>Genre</th>
+                            <th>Daily Rate</th>
+                            <th>Rental Period (Days)</th>
+                            <th>Total Cost</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cart_item in cart_items %}
+                            <tr>
+                                <td>{{ cart_item.item.title }}</td>
+                                <td>{{ cart_item.item.type }}</td>
+                                <td>{{ cart_item.item.genre }}</td>
+                                <td>Rs. {{ cart_item.item.daily_rate }}</td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('edit_cart', cart_id=cart_item.id) }}" class="d-inline">
+                                        <input type="number" name="days" value="{{ cart_item.days }}" min="1" max="14" class="form-control form-control-sm d-inline w-auto days-input" data-daily-rate="{{ cart_item.item.daily_rate }}" required>
+                                        <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                                    </form>
+                                </td>
+                                <td class="item-total-cost">Rs. {{ cart_item.item.daily_rate * cart_item.days }}</td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('remove_from_cart', cart_id=cart_item.id) }}">
+                                        <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-4">
+                <p><strong>Total Cost:</strong> Rs. <span id="totalCost">{{ total_cost }}</span></p>
+                <form method="POST">
+                    <button type="submit" class="btn btn-primary">Checkout</button>
+                    <a href="{{ url_for('browse_items') }}" class="btn btn-secondary">Continue Browsing</a>
+                </form>
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                <p>Your cart is empty.</p>
+                <a href="{{ url_for('browse_items') }}" class="btn btn-primary">Browse Items</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    // Function to update the total cost dynamically
+    function updateTotalCost() {
+        let totalCost = 0;
+        document.querySelectorAll('.days-input').forEach(input => {
+            const dailyRate = parseFloat(input.dataset.dailyRate);
+            const days = parseInt(input.value) || 0;
+            const itemTotalCost = dailyRate * days;
+
+            // Update the individual item total cost
+            input.closest('tr').querySelector('.item-total-cost').textContent = `Rs. ${itemTotalCost.toFixed(2)}`;
+
+            // Add to the total cost
+            totalCost += itemTotalCost;
+        });
+
+        // Update the total cost at the bottom
+        document.getElementById('totalCost').textContent = totalCost.toFixed(2);
+    }
+
+    // Add event listeners to all days input fields
+    document.querySelectorAll('.days-input').forEach(input => {
+        input.addEventListener('input', updateTotalCost);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,43 @@
+<!-- templates/manage_early_returns.html -->
+{% extends 'base.html' %}
+
+{% block title %}Manage Early Returns - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2>Manage Early Return Requests</h2>
+        {% if early_returns %}
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Rental ID</th>
+                        <th>Customer</th>
+                        <th>Item</th>
+                        <th>Request Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rental in early_returns %}
+                        <tr>
+                            <td>{{ rental.id }}</td>
+                            <td>{{ rental.user.name }}</td>
+                            <td>{{ rental.item.title }}</td>
+                            <td>{{ rental.rental_date.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('process_early_return', rental_id=rental.id) }}">
+                                    <button type="submit" name="action" value="approve" class="btn btn-success btn-sm">Approve</button>
+                                    <button type="submit" name="action" value="deny" class="btn btn-danger btn-sm">Deny</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="alert alert-info">No early return requests.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

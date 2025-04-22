@@ -1,0 +1,224 @@
+<!-- templates/admin_dashboard.html -->
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h4>Admin Dashboard</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card bg-light mb-3">
+                            <div class="card-body text-center">
+                                <h5>Total Users</h5>
+                                <h2>{{ users|length }}</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light mb-3">
+                            <div class="card-body text-center">
+                                <h5>Total Items</h5>
+                                <h2>{{ items|length }}</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light mb-3">
+                            <div class="card-body text-center">
+                                <h5>Active Rentals</h5>
+                                <h2>{{ rentals|selectattr('status', 'equalto', 'approved')|list|length }}</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light mb-3">
+                            <div class="card-body text-center">
+                                <h5>Pending Rentals</h5>
+                                <h2>{{ rentals|selectattr('status', 'equalto', 'pending')|list|length }}</h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <a href="{{ url_for('add_item') }}" class="btn btn-primary me-2">Add New Item</a>
+                    <a href="{{ url_for('add_user') }}" class="btn btn-success">Add New User</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <ul class="nav nav-tabs" id="adminTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab">Users</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="items-tab" data-bs-toggle="tab" data-bs-target="#items" type="button" role="tab">Items</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="rentals-tab" data-bs-toggle="tab" data-bs-target="#rentals" type="button" role="tab">Rentals</button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="adminTabContent">
+            <div class="tab-pane fade show active" id="users" role="tabpanel">
+                <div class="card">
+                    <div class="card-body">
+                        <h5>User Management</h5>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th>Deposit</th>
+                                        <th>Membership</th>
+                                        <th>Joined</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in users %}
+                                        <tr>
+                                            <td>{{ user.id }}</td>
+                                            <td>{{ user.name }}</td>
+                                            <td>{{ user.email }}</td>
+                                            <td>{{ user.role }}</td>
+                                            <td>
+                                                {% if user.role == 'customer' %}
+                                                    Rs. {{ user.deposit }}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if user.role == 'customer' %}
+                                                    {% if user.membership_active %}
+                                                        <span class="badge bg-success">Active</span>
+                                                    {% else %}
+                                                        <span class="badge bg-warning">Inactive</span>
+                                                    {% endif %}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ user.date_joined.strftime('%Y-%m-%d') if user.date_joined else 'N/A' }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="items" role="tabpanel">
+                <div class="card">
+                    <div class="card-body">
+                        <h5>Item Management</h5>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Title</th>
+                                        <th>Type</th>
+                                        <th>Format</th>
+                                        <th>Genre</th>
+                                        <th>Daily Rate</th>
+                                        <th>Status</th>
+                                        <th>Added On</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in items %}
+                                        <tr>
+                                            <td>{{ item.id }}</td>
+                                            <td>{{ item.title }}</td>
+                                            <td>{{ item.type }}</td>
+                                            <td>{{ item.format }}</td>
+                                            <td>{{ item.genre }}</td>
+                                            <td>Rs. {{ item.daily_rate }}</td>
+                                            <td>
+                                                {% if item.available %}
+                                                    <span class="badge bg-success">Available</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Rented</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ item.date_added.strftime('%Y-%m-%d') }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="rentals" role="tabpanel">
+                <div class="card">
+                    <div class="card-body">
+                        <h5>Rental Management</h5>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Customer</th>
+                                        <th>Item</th>
+                                        <th>Rental Date</th>
+                                        <th>Due Date</th>
+                                        <th>Return Date</th>
+                                        <th>Status</th>
+                                        <th>Charge</th>
+                                        <th>Note</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for rental in rentals %}
+                                        <tr>
+                                            <td>{{ rental.id }}</td>
+                                            <td>{{ rental.user_name }}</td>
+                                            <td>{{ rental.item_title }}</td>
+                                            <td>{{ rental.rental_date.strftime('%Y-%m-%d') }}</td>
+                                            <td>{{ rental.due_date.strftime('%Y-%m-%d') }}</td>
+                                            <td>
+                                                {{ rental.return_date.strftime('%Y-%m-%d') if rental.return_date else '-' }}
+                                            </td>
+                                            <td>
+                                                {% if rental.status == 'pending' %}
+                                                    <span class="badge bg-warning">Pending</span>
+                                                {% elif rental.status == 'approved' %}
+                                                    <span class="badge bg-success">Approved</span>
+                                                {% elif rental.status == 'returned' %}
+                                                    <span class="badge bg-info">Returned</span>
+                                                {% elif rental.status == 'declined' %}
+                                                    <span class="badge bg-danger">Declined</span>
+                                                {% elif rental.status == 'overdue' %}
+                                                    <span class="badge bg-danger">Overdue</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>Rs. {{ rental.total_charge }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

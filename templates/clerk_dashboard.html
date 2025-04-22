@@ -1,0 +1,141 @@
+<!-- templates/clerk_dashboard.html -->
+{% extends 'base.html' %}
+
+{% block title %}Clerk Dashboard - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h4>Clerk Dashboard</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card bg-light mb-3">
+                            <div class="card-body text-center">
+                                <h5>Pending Rentals</h5>
+                                <h2>{{ pending_rentals|length }}</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light mb-3">
+                            <div class="card-body text-center">
+                                <h5>Active Rentals</h5>
+                                <h2>{{ active_rentals|length }}</h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <a href="{{ url_for('manage_early_returns') }}" class="btn btn-primary">Manage Early Returns</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <ul class="nav nav-tabs" id="clerkTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab">Pending Rentals</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="active-tab" data-bs-toggle="tab" data-bs-target="#active" type="button" role="tab">Active Rentals</button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="clerkTabContent">
+            <div class="tab-pane fade show active" id="pending" role="tabpanel">
+                <div class="card">
+                    <div class="card-body">
+                        <h5>Pending Rentals</h5>
+                        {% if pending_rentals %}
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Customer</th>
+                                            <th>Item</th>
+                                            <th>Rental Date</th>
+                                            <th>Due Date</th>
+                                            <th>Total Charge</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for rental in pending_rentals %}
+                                            <tr>
+                                                <td>{{ rental.id }}</td>
+                                                <td>{{ rental.user_name }}</td>
+                                                <td>{{ rental.item_title }}</td>
+                                                <td>{{ rental.rental_date.strftime('%Y-%m-%d') }}</td>
+                                                <td>{{ rental.due_date.strftime('%Y-%m-%d') }}</td>
+                                                <td>Rs. {{ rental.total_charge }}</td>
+                                                <td>
+                                                    <a href="{{ url_for('approve_rental', rental_id=rental.id) }}" class="btn btn-success btn-sm">Approve</a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info">
+                                No pending rentals at the moment.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="active" role="tabpanel">
+                <div class="card">
+                    <div class="card-body">
+                        <h5>Active Rentals</h5>
+                        {% if active_rentals %}
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Customer</th>
+                                            <th>Item</th>
+                                            <th>Rental Date</th>
+                                            <th>Due Date</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for rental in active_rentals %}
+                                            <tr>
+                                                <td>{{ rental.id }}</td>
+                                                <td>{{ rental.user_name }}</td>
+                                                <td>{{ rental.item_title }}</td>
+                                                <td>{{ rental.rental_date.strftime('%Y-%m-%d') }}</td>
+                                                <td>{{ rental.due_date.strftime('%Y-%m-%d') }}</td>
+                                                <td>
+                                                    <a href="{{ url_for('return_item', rental_id=rental.id) }}" class="btn btn-primary btn-sm">Process Return</a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info">
+                                No active rentals at the moment.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

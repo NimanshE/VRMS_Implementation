@@ -1,0 +1,41 @@
+<!-- templates/index.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12 text-center">
+        <h1>Welcome to Video Rental System</h1>
+        <p class="lead">Your one-stop shop for video and music rentals</p>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Browse Our Collection</h5>
+                <p class="card-text">Explore our extensive collection of movies and music.</p>
+                <a href="{{ url_for('browse_items') }}" class="btn btn-primary">Browse Now</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Become a Member</h5>
+                <p class="card-text">Register and make a deposit to enjoy member benefits.</p>
+                <a href="{{ url_for('register') }}" class="btn btn-primary">Register</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Already a Member?</h5>
+                <p class="card-text">Log in to manage your account and rentals.</p>
+                <a href="{{ url_for('login') }}" class="btn btn-primary">Login</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

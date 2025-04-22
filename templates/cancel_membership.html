@@ -1,0 +1,30 @@
+<!-- templates/cancel_membership.html -->
+{% extends 'base.html' %}
+
+{% block title %}Cancel Membership - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <div class="card">
+            <div class="card-header">
+                <h4>Cancel Membership</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <p>Are you sure you want to cancel your membership?</p>
+                    <p>Your deposit amount of Rs. {{ current_user.deposit }} will be refunded upon cancellation.</p>
+                    <p><strong>Note:</strong> Once cancelled, you will no longer be able to rent items until you reactivate your membership with a new deposit.</p>
+                </div>
+
+                <form method="POST">
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-danger">Confirm Cancellation</button>
+                        <a href="{{ url_for('customer_dashboard') }}" class="btn btn-secondary">Keep My Membership</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
