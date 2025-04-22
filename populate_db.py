@@ -1,7 +1,10 @@
 # populate_db.py
+from werkzeug.security import generate_password_hash
+
 from app import db, Item, app  # Ensure `app` is imported
 from datetime import datetime, timedelta
 import random
+from app import User, Rental
 
 def populate_items():
     with app.app_context():  # Add application context
@@ -168,5 +171,69 @@ def populate_items():
         db.session.commit()
         print("Items populated successfully!")
 
+
+def populate_users():
+    with app.app_context():
+        # Clear existing users
+        User.query.delete()
+
+        # Predefined users
+        users = [
+            {"name": "Admin User", "email": "admin@example.com", "password": "admin123", "role": "admin"},
+            {"name": "Clerk User", "email": "clerk@example.com", "password": "clerk123", "role": "clerk"},
+            {"name": "John Doe", "email": "john.doe@example.com", "password": "password123", "role": "customer", "deposit": 1500.00},
+            {"name": "Jane Smith", "email": "jane.smith@example.com", "password": "password123", "role": "customer", "deposit": 2000.00},
+            {"name": "Alice Johnson", "email": "alice.johnson@example.com", "password": "password123", "role": "customer", "deposit": 1000.00},
+        ]
+
+        for user_data in users:
+            user = User(
+                name=user_data["name"],
+                email=user_data["email"],
+                password=generate_password_hash(user_data["password"]),
+                role=user_data["role"],
+                deposit=user_data.get("deposit", 0.00),
+                membership_active=user_data["role"] == "customer",
+                date_joined=datetime.utcnow()
+            )
+            db.session.add(user)
+
+        db.session.commit()
+        print("Users populated successfully!")
+
+def populate_rentals():
+    with app.app_context():
+        # Clear existing rentals
+        Rental.query.delete()
+
+        # Fetch users and items
+        customers = User.query.filter_by(role="customer").all()
+        items = Item.query.all()
+
+        # Generate random rentals
+        for _ in range(20):  # Create 20 random rentals
+            customer = random.choice(customers)
+            item = random.choice(items)
+            rental_date = datetime.utcnow() - timedelta(days=random.randint(1, 30))
+            due_date = rental_date + timedelta(days=random.randint(1, 14))
+            return_date = rental_date + timedelta(days=random.randint(1, 14)) if random.random() > 0.5 else None
+            status = "returned" if return_date else "approved"
+
+            rental = Rental(
+                user_id=customer.id,
+                item_id=item.id,
+                rental_date=rental_date,
+                due_date=due_date,
+                return_date=return_date,
+                status=status,
+                total_charge=round(item.daily_rate * (return_date - rental_date).days if return_date else item.daily_rate * (due_date - rental_date).days, 2)
+            )
+            db.session.add(rental)
+
+        db.session.commit()
+        print("Rentals populated successfully!")
+
 if __name__ == "__main__":
     populate_items()
+    populate_users()
+    populate_rentals()

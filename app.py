@@ -485,14 +485,13 @@ def cancel_membership():
 
     return render_template('cancel_membership.html')
 
-
 @app.route('/browse', methods=['GET'])
 def browse_items():
     query = request.args.get('query', '').strip()
     item_type = request.args.get('type', '').strip()
 
     # Base query to fetch only available items
-    items_query = Item.query.filter_by(available=True)
+    items_query = Item.query
 
     # Apply search filter if a query is provided
     if query:
@@ -504,8 +503,12 @@ def browse_items():
 
     # Fetch the filtered items
     items = items_query.all()
+    # Render different templates based on user role
+    if current_user.role in ['admin', 'clerk']:
+        return render_template('browse_admin_clerk.html', items=items, query=query, item_type=item_type)
+    else:
+        return render_template('browse.html', items=items, query=query, item_type=item_type)
 
-    return render_template('browse.html', items=items, query=query, item_type=item_type)
 
 @app.route('/rent/<int:item_id>', methods=['GET', 'POST'])
 @login_required
