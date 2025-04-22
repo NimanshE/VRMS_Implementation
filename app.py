@@ -384,6 +384,7 @@ def customer_dashboard():
     return render_template('customer_dashboard.html', user_rentals=user_rentals)
 """
 
+
 @app.route('/customer/dashboard')
 @login_required
 def customer_dashboard():
@@ -431,26 +432,35 @@ def report_lost_damaged(rental_id):
         flash('Unauthorized access.', 'danger')
         return redirect(url_for('clerk_dashboard'))
 
+    # Fetch rental, item, and user details
     rental = Rental.query.get_or_404(rental_id)
     item = Item.query.get_or_404(rental.item_id)
     user = User.query.get_or_404(rental.user_id)
 
+    # Check if the rental is already marked as lost or damaged
     if rental.lost_or_damaged:
         flash('This rental has already been reported as lost or damaged.', 'warning')
         return redirect(url_for('clerk_dashboard'))
 
+    # Mark the rental as lost or damaged
+    rental.lost_or_damaged = True
+    rental.status = 'lost/damaged'
+
+    # Make the item unavailable
+    item.available = False
+
     # Charge the user the full purchase price
-    purchase_price = item.daily_rate * 30  # Example: Assume 30 days' worth of daily rate as the purchase price
+    purchase_price = item.daily_rate * 30  # Assuming 30 days as the purchase price multiplier
     if user.deposit >= purchase_price:
         user.deposit -= purchase_price
-        rental.lost_or_damaged = True
-        rental.status = 'lost'  # Mark as lost or damaged
-        item.available = False  # Remove item from inventory
-        db.session.commit()
-        flash(f'Item reported as lost/damaged. Rs. {purchase_price} has been deducted from the user\'s deposit.', 'success')
+        flash(f'The user has been charged Rs. {purchase_price} for the lost/damaged item.', 'success')
     else:
-        flash('Insufficient deposit to cover the cost of the lost/damaged item.', 'danger')
+        flash('The user does not have enough deposit to cover the cost of the lost/damaged item.', 'danger')
 
+    # Commit changes to the database
+    db.session.commit()
+
+    flash('The rental has been marked as lost or damaged, and the item is now unavailable.', 'success')
     return redirect(url_for('clerk_dashboard'))
 
 @app.route('/cancel_membership', methods=['GET', 'POST'])
@@ -476,23 +486,26 @@ def cancel_membership():
     return render_template('cancel_membership.html')
 
 
-@app.route('/browse')
+@app.route('/browse', methods=['GET'])
 def browse_items():
-    query = request.args.get('query', '')
-    item_type = request.args.get('type', '')
+    query = request.args.get('query', '').strip()
+    item_type = request.args.get('type', '').strip()
 
-    items_query = Item.query
+    # Base query to fetch only available items
+    items_query = Item.query.filter_by(available=True)
 
+    # Apply search filter if a query is provided
     if query:
-        items_query = items_query.filter(Item.title.contains(query))
+        items_query = items_query.filter(Item.title.ilike(f'%{query}%'))
 
+    # Apply type filter if a type is provided
     if item_type:
         items_query = items_query.filter_by(type=item_type)
 
+    # Fetch the filtered items
     items = items_query.all()
 
     return render_template('browse.html', items=items, query=query, item_type=item_type)
-
 
 @app.route('/rent/<int:item_id>', methods=['GET', 'POST'])
 @login_required

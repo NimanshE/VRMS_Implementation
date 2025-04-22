@@ -97,6 +97,12 @@
                                                 <td>
                                                     <a href="{{ url_for('return_item', rental_id=rental.id) }}" class="btn btn-primary btn-sm">Process Return</a>
                                                 </td>
+                                                 <td>
+                                                    <form method="POST" action="{{ url_for('report_lost_damaged', rental_id=rental.id) }}">
+                                                        <button type="submit" class="btn btn-danger btn-sm">Mark as Lost/Damaged</button>
+                                                    </form>
+                                                </td>
+
                                             </tr>
                                         {% endfor %}
                                     </tbody>
@@ -139,6 +145,11 @@
                                                     <form method="POST" action="{{ url_for('process_early_return', rental_id=rental.id) }}">
                                                         <button type="submit" name="action" value="approve" class="btn btn-success btn-sm">Approve</button>
                                                         <button type="submit" name="action" value="deny" class="btn btn-danger btn-sm">Deny</button>
+                                                    </form>
+                                                </td>
+                                                <td>
+                                                    <form method="POST" action="{{ url_for('report_lost_damaged', rental_id=rental.id) }}">
+                                                        <button type="submit" class="btn btn-danger btn-sm">Mark as Lost/Damaged</button>
                                                     </form>
                                                 </td>
                                             </tr>

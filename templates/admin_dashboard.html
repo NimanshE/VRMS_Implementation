@@ -203,6 +203,8 @@
                                                     <span class="badge bg-success">Approved</span>
                                                 {% elif rental.status == 'returned' %}
                                                     <span class="badge bg-info">Returned</span>
+                                                {% elif rental.status == 'lost/damaged' %}
+                                                    <span class="badge bg-danger">Lost/Damaged</span>
                                                 {% elif rental.status == 'declined' %}
                                                     <span class="badge bg-danger">Declined</span>
                                                 {% elif rental.status == 'overdue' %}
