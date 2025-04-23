@@ -1,0 +1,67 @@
+<!-- templates/add_user.html -->
+{% extends 'base.html' %}
+
+{% block title %}Add User - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <div class="card">
+            <div class="card-header">
+                <h4>Add New User</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="role" class="form-label">Role</label>
+                        <select class="form-control" id="role" name="role" required>
+                            <option value="admin">Admin</option>
+                            <option value="clerk">Clerk</option>
+                            <option value="customer">Customer</option>
+                        </select>
+                    </div>
+                    <!-- Additional fields for Customer -->
+                    <div id="customer-fields" style="display: none;">
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Address</label>
+                            <textarea class="form-control" id="address" name="address" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="phone" name="phone">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add User</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('role').addEventListener('change', function () {
+        const customerFields = document.getElementById('customer-fields');
+        if (this.value === 'customer') {
+            customerFields.style.display = 'block';
+            document.getElementById('address').required = true;
+            document.getElementById('phone').required = true;
+        } else {
+            customerFields.style.display = 'none';
+            document.getElementById('address').required = false;
+            document.getElementById('phone').required = false;
+        }
+    });
+</script>
+{% endblock %}

@@ -1,5 +1,5 @@
 # app.py
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -7,6 +7,7 @@ from datetime import datetime
 import os
 from flask_mail import Mail, Message
 from datetime import timedelta
+from sqlalchemy import func
 
 
 app = Flask(__name__)
@@ -42,7 +43,6 @@ class User(db.Model, UserMixin):
     date_joined = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     # Specify foreign_keys for rentals relationship
     rentals = db.relationship('Rental', backref='user', lazy=True, foreign_keys='Rental.user_id')
-
 
 class Rental(db.Model):
     id = db.Column(db.Integer, primary_key=True)
