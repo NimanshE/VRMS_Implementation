@@ -1,6 +1,4 @@
-# populate_db.py
 from werkzeug.security import generate_password_hash
-
 from app import db, Item, app  # Ensure `app` is imported
 from datetime import datetime, timedelta
 import random

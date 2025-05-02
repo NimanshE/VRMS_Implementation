@@ -1,4 +1,3 @@
-# app.py
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -84,10 +83,10 @@ class Cart(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     item_id = db.Column(db.Integer, db.ForeignKey('item.id'), nullable=False)
     days = db.Column(db.Integer, default=7)  # Default rental period is 7 days
-
     user = db.relationship('User', backref='cart_items')
     item = db.relationship('Item', backref='cart_entries')
-
+    daily_rate = db.Column(db.Float, nullable=False)
+    total_cost = db.Column(db.Float, nullable=False)
 # User loader
 @login_manager.user_loader
 def load_user(user_id):
@@ -186,8 +185,19 @@ def view_cart():
         flash('Access denied.', 'danger')
         return redirect(url_for('home'))
 
+    from datetime import datetime, timedelta
+
     cart_items = Cart.query.filter_by(user_id=current_user.id).all()
-    total_cost = sum(cart_item.item.daily_rate * 7 for cart_item in cart_items)  # Assuming a 7-day rental period
+    total_cost = 0
+
+    # Calculate total cost with discounts applied
+    for cart_item in cart_items:
+        item = cart_item.item
+        if item.date_added and (item.date_added + timedelta(days=365)) < datetime.now():
+            daily_rate = item.daily_rate / 2  # Apply 50% discount
+        else:
+            daily_rate = item.daily_rate
+        total_cost += daily_rate * cart_item.days
 
     if request.method == 'POST':
         # Check if total cost exceeds deposit
@@ -203,11 +213,18 @@ def view_cart():
 
         # Process checkout
         for cart_item in cart_items:
+            item = cart_item.item
+            if item.date_added and (item.date_added + timedelta(days=365)) < datetime.now():
+                daily_rate = item.daily_rate / 2  # Apply 50% discount
+            else:
+                daily_rate = item.daily_rate
+
+            total_charge = daily_rate * cart_item.days  # Calculate total charge
             rental = Rental(
                 user_id=current_user.id,
                 item_id=cart_item.item_id,
-                due_date=datetime.utcnow() + timedelta(days=7),  # Default rental period: 7 days
-                total_charge=cart_item.item.daily_rate * 7,  # Calculate total charge
+                due_date=datetime.utcnow() + timedelta(days=cart_item.days),
+                total_charge=total_charge,
                 status='pending'
             )
             cart_item.item.available = False  # Mark item as unavailable
@@ -218,11 +235,37 @@ def view_cart():
         flash('Rental request submitted successfully.', 'success')
         return redirect(url_for('customer_dashboard'))
 
-    return render_template('cart.html', cart_items=cart_items, total_cost=total_cost)
+    return render_template('cart.html', cart_items=cart_items, total_cost=total_cost,timedelta=timedelta,now=datetime.now())
 
 
+@app.route('/cart/edit/<int:cart_id>', methods=['POST'])
+@login_required
+def edit_cart(cart_id):
+    cart_item = Cart.query.get_or_404(cart_id)
 
-@app.route('/cart/add/<int:item_id>', methods=['POST'])
+    if cart_item.user_id != current_user.id:
+        flash('Unauthorized action.', 'danger')
+        return redirect(url_for('view_cart'))
+
+    from datetime import datetime, timedelta
+
+    new_days = int(request.form.get('days', 7))
+    item = cart_item.item
+    if item.date_added and (item.date_added + timedelta(days=365)) < datetime.now():
+        daily_rate = item.daily_rate / 2  # Apply 50% discount
+    else:
+        daily_rate = item.daily_rate
+
+    cart_item.days = new_days
+    cart_item.daily_rate = daily_rate
+    cart_item.total_cost = daily_rate * new_days  # Update total cost
+    db.session.commit()
+    flash('Rental period updated.', 'success')
+
+    return redirect(url_for('view_cart'))
+
+
+"""@app.route('/cart/add/<int:item_id>', methods=['POST'])
 @login_required
 def add_to_cart(item_id):
     days = int(request.form.get('days', 7))  # Default to 7 days if not specified
@@ -236,9 +279,40 @@ def add_to_cart(item_id):
         db.session.commit()
         flash('Item added to cart.', 'success')
 
+    return redirect(url_for('browse_items'))"""
+
+@app.route('/cart/add/<int:item_id>', methods=['POST'])
+@login_required
+def add_to_cart(item_id):
+    from datetime import datetime, timedelta
+
+    days = int(request.form.get('days', 7))  # Default to 7 days if not specified
+    item = Item.query.get_or_404(item_id)  # Fetch the item from the database
+
+    # Check if the item is already in the cart
+    existing_cart_item = Cart.query.filter_by(user_id=current_user.id, item_id=item_id).first()
+
+    if existing_cart_item:
+        flash('Item is already in your cart.', 'info')
+    else:
+        # Determine if the item is eligible for a discount
+        if item.date_added and (item.date_added + timedelta(days=365)) < datetime.now():
+            daily_rate = item.daily_rate / 2  # Apply 50% discount
+        else:
+            daily_rate = item.daily_rate
+
+        # Calculate the total cost for the rental period
+        total_cost = daily_rate * days
+
+        # Add the item to the cart
+        cart_item = Cart(user_id=current_user.id, item_id=item_id, days=days, daily_rate=daily_rate, total_cost=total_cost)
+        db.session.add(cart_item)
+        db.session.commit()
+        flash(f'Item added to cart for Rs. {total_cost:.2f}', 'success')
+
     return redirect(url_for('browse_items'))
 
-@app.route('/cart/edit/<int:cart_id>', methods=['POST'])
+"""@app.route('/cart/edit/<int:cart_id>', methods=['POST'])
 @login_required
 def edit_cart(cart_id):
     cart_item = Cart.query.get_or_404(cart_id)
@@ -252,7 +326,7 @@ def edit_cart(cart_id):
     db.session.commit()
     flash('Rental period updated.', 'success')
 
-    return redirect(url_for('view_cart'))
+    return redirect(url_for('view_cart'))"""
 
 @app.route('/cart/remove/<int:cart_id>', methods=['POST'])
 @login_required
@@ -504,7 +578,7 @@ def report_lost_damaged(rental_id):
     flash('The rental has been marked as lost or damaged, and the item is now unavailable.', 'success')
     return redirect(url_for('clerk_dashboard'))
 
-@app.route('/cancel_membership', methods=['GET', 'POST'])
+"""@app.route('/cancel_membership', methods=['GET', 'POST'])
 @login_required
 def cancel_membership():
     if current_user.role != 'customer':
@@ -524,7 +598,45 @@ def cancel_membership():
         db.session.commit()
         return redirect(url_for('customer_dashboard'))
 
-    return render_template('cancel_membership.html')
+    # Pass the current_user object to the template
+    return render_template('cancel_membership.html', user=current_user)
+"""
+
+@app.route('/cancel_membership', methods=['GET', 'POST'])
+@login_required
+def cancel_membership():
+    if current_user.role != 'customer':
+        flash('Only customers can cancel membership', 'danger')
+        return redirect(url_for('home'))
+
+    active_rentals = Rental.query.filter_by(user_id=current_user.id, status='approved').all()
+
+    if active_rentals:
+        flash('You have outstanding rentals. Please return all items before cancelling membership.', 'danger')
+        return redirect(url_for('customer_dashboard'))
+
+    if request.method == 'POST':
+        refund_amount = current_user.deposit
+        current_user.membership_active = False
+        current_user.deposit = 0
+        db.session.commit()
+
+        # Send cancellation email
+        try:
+            msg = Message(
+                subject="Membership Cancellation Confirmation",
+                recipients=[current_user.email],
+                body=f"Dear {current_user.name},\n\nYour membership has been successfully cancelled. "
+                     f"A refund of Rs. {refund_amount:.2f} has been processed.\n\nThank you."
+            )
+            mail.send(msg)
+            flash('Membership cancelled and confirmation email sent.', 'info')
+        except Exception as e:
+            flash('Membership cancelled, but failed to send confirmation email.', 'warning')
+
+        return redirect(url_for('customer_dashboard'))
+
+    return render_template('cancel_membership.html', user=current_user)
 
 @app.route('/browse', methods=['GET'])
 def browse_items():
@@ -546,9 +658,9 @@ def browse_items():
     items = items_query.all()
     # Render different templates based on user role
     if current_user.role in ['admin', 'clerk']:
-        return render_template('browse_admin_clerk.html', items=items, query=query, item_type=item_type)
+        return render_template('browse_admin_clerk.html', items=items, query=query, item_type=item_type,timedelta=timedelta,now=datetime.now())
     else:
-        return render_template('browse.html', items=items, query=query, item_type=item_type)
+        return render_template('browse.html', items=items, query=query, item_type=item_type,timedelta=timedelta,now=datetime.now())
 
 
 @app.route('/rent/<int:item_id>', methods=['GET', 'POST'])
@@ -1018,23 +1130,38 @@ def add_item():
         item_type = request.form.get('type')
         format = request.form.get('format')
         genre = request.form.get('genre')
-        daily_rate = float(request.form.get('daily_rate'))
+        daily_rate = request.form.get('daily_rate')
+        purchase_price = request.form.get('purchase_price')
 
+        # Validate input fields
+        if not title or not item_type or not format or not genre or not daily_rate or not purchase_price:
+            flash('All fields are required.', 'danger')
+            return redirect(url_for('add_item'))
+
+        try:
+            daily_rate = float(daily_rate)
+            purchase_price = float(purchase_price)
+        except ValueError:
+            flash('Daily rate and purchase price must be valid numbers.', 'danger')
+            return redirect(url_for('add_item'))
+
+        # Add the new item to the database
         new_item = Item(
             title=title,
             type=item_type,
             format=format,
             genre=genre,
-            daily_rate=daily_rate
+            daily_rate=daily_rate,
+            purchase_price=purchase_price,
+            available=True
         )
 
         db.session.add(new_item)
         db.session.commit()
-        flash('Item added successfully', 'success')
+        flash('Item added successfully.', 'success')
         return redirect(url_for('admin_dashboard'))
 
     return render_template('add_item.html')
-
 
 @app.route('/admin/add_user', methods=['GET', 'POST'])
 @login_required

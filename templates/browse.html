@@ -46,7 +46,14 @@
                                 <td>{{ item.title }}</td>
                                 <td>{{ item.type }}</td>
                                 <td>{{ item.genre }}</td>
-                                <td>Rs. {{ item.daily_rate }}</td>
+                                <td>
+                                    {% if item.date_added and (item.date_added + timedelta(days=365)) < now %}
+                                        <span class="text-decoration-line-through">Rs. {{ item.daily_rate }}</span>
+                                        <span class="text-danger">Rs. {{ (item.daily_rate / 2)|round(2) }} (On Sale 50% off)</span>
+                                    {% else %}
+                                        Rs. {{ item.daily_rate }}
+                                    {% endif %}
+                                </td>
                                 <td>
                                     {% if item.available %}
                                         <span class="badge bg-success">Available</span>

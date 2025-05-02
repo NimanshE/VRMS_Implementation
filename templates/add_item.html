@@ -37,6 +37,12 @@
                         <label for="daily_rate" class="form-label">Daily Rate</label>
                         <input type="number" class="form-control" id="daily_rate" name="daily_rate" required>
                     </div>
+
+                    <div class="mb-3">
+                        <label for="purchase_price" class="form-label">Purchase Price (Rs.)</label>
+                        <input type="number" class="form-control" id="purchase_price" name="purchase_price" step="0.01" required>
+                    </div>
+
                     <div class="mb-3">
                         <label for="available" class="form-label">Available</label>
                         <select class="form-control" id="available" name="available" required>
@@ -49,10 +55,10 @@
                         <textarea class="form-control" id="description" name="description" rows="3"></textarea>
                     </div>
                     <button type="submit" class="btn btn-primary">Add Item</button>
+                    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Cancel</a>
                 </form>
             </div>
         </div>
     </div>
 </div>
 {% endblock %}
-
